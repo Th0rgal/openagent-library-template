@@ -1,100 +1,85 @@
-# OpenAgent Library Template
+# Sandboxed.sh Library
 
-This is the default template for OpenAgent configuration libraries. Fork this repository to create your own library with custom skills, commands, tools, rules, and agents.
+Configuration library for AI coding assistants. Contains skills, commands, and
+MCP server configs that sync to Claude Code, Codex, and other tools.
 
 ## Structure
 
 ```
-library/
-├── skill/              # Reusable skills (SKILL.md + reference files)
-├── command/            # Slash commands (markdown with YAML frontmatter)
-├── tool/               # Custom TypeScript tools (@opencode-ai/plugin)
-├── rule/               # Reusable instruction sets
-├── agent/              # Custom agent configurations
+├── skill/              # Reusable skills (SKILL.md + references/)
+├── command/            # Slash commands (markdown files)
 ├── mcp/                # MCP server configurations (servers.json)
-├── opencode/           # OpenCode plugin configs (oh-my-opencode.json)
-└── workspace-template/ # Workspace templates (distro/skills/env/init script)
+├── init-script/        # Initialization scripts for workspaces
+├── workspace-template/ # Workspace templates
+└── script/             # Sync scripts
 ```
 
-## Built-in Library Tools
+## Quick Start
 
-This template includes tools for managing library content programmatically:
+Sync library contents to your local AI tool configs:
 
-### `library-skills.ts`
-- `list_skills` - List all skills in the library
-- `get_skill` - Get full skill content by name
-- `save_skill` - Create or update a skill
-- `delete_skill` - Delete a skill
+```bash
+# Sync everything
+python3 script/sync.py
 
-### `library-commands.ts`
-- `list_commands` - List all slash commands
-- `get_command` - Get command content
-- `save_command` - Create or update a command
-- `delete_command` - Delete a command
-- `list_tools` - List custom tools
-- `get_tool` - Get tool source code
-- `save_tool` - Create or update a tool
-- `delete_tool` - Delete a tool
-- `list_rules` - List rules
-- `get_rule` - Get rule content
-- `save_rule` - Create or update a rule
-- `delete_rule` - Delete a rule
+# Dry run (preview changes)
+python3 script/sync.py --dry-run
 
-### `library-git.ts`
-- `status` - Get library git status
-- `sync` - Pull latest changes from remote
-- `commit` - Commit changes with a message
-- `push` - Push to remote
-- `get_mcps` - Get MCP server configurations
-- `save_mcps` - Save MCP configurations
+# Sync only specific content
+python3 script/sync.py --skills-only
+python3 script/sync.py --commands-only
+python3 script/sync.py --mcp-only
 
-## Usage
-
-1. Fork this repository
-2. Configure your OpenAgent instance with `LIBRARY_REMOTE=git@github.com:your-username/your-library.git`
-3. Add skills, commands, and tools via the dashboard or using the library tools
+# Prune orphaned items
+python3 script/sync.py --prune
+```
 
 ## Creating Skills
 
-Skills are directories containing a `SKILL.md` file with YAML frontmatter:
+Skills are directories in `skill/` containing a `SKILL.md`:
 
 ```markdown
 ---
 name: my-skill
-description: Description of what this skill does
+description: Trigger this skill when user asks about X
 ---
 
-Instructions for the agent on how to use this skill...
+Instructions for the AI agent...
 ```
+
+Add reference files in `skill/my-skill/references/` for additional context.
 
 ## Creating Commands
 
-Commands are markdown files with YAML frontmatter:
+Commands are markdown files in `command/`:
 
 ```markdown
 ---
 description: What this command does
-model: claude-sonnet-4-20250514
 ---
 
 Prompt template for the command...
 ```
 
-## Creating Tools
+## MCP Configuration
 
-Tools are TypeScript files using `@opencode-ai/plugin`:
+Add servers to `mcp/servers.json`:
 
-```typescript
-import { tool } from "@opencode-ai/plugin"
-
-export const my_tool = tool({
-  description: "What this tool does",
-  args: {
-    param: tool.schema.string().describe("Parameter description"),
-  },
-  async execute(args) {
-    // Tool implementation
-    return "Result"
-  },
-})
+```json
+{
+  "my-server": {
+    "command": "npx",
+    "args": ["-y", "my-mcp-server"]
+  }
+}
 ```
+
+## Sync Targets
+
+The sync script writes to:
+
+| Content  | Claude Code           | Codex/Opencode         |
+| -------- | --------------------- | ---------------------- |
+| Skills   | `~/.claude/skills/`   | `~/.codex/skills/`     |
+| Commands | `~/.claude/commands/` | `~/.codex/prompts/`    |
+| MCP      | `~/.claude.json`      | `~/.codex/config.toml` |
